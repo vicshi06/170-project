@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 
 # In[2]:
 
@@ -65,10 +68,6 @@ def find_next_available_group(G, vertex, assigned_nodes, first_team, k, group):
             else:
                 break
         i = i + 1
-    #index = random.randint(0, len(assigned_nodes)-1)
-#     min_len = min(group.values(), key=len)
-#     keys_lst = list(group.keys())
-#     index = key_list[list(group.values()).index(min_len)]
     return random.randint(min(group.values(), key=len))
 
 # In[76]:
@@ -148,53 +147,63 @@ def greedy_color(G, order):
     
     # find the team with the highest sum of edges
     max_team = max(group_sum, key=group_sum.get)
-
-    temp_group = best_group
+    counter = 0
 
     # iterate through the nodes in the team with the highest sum of edges
     # randomly choose a team that is not the max team
     # switch the team assignment of each node to a team that doesn't share any edges with it
+    
+    # some nodes might not be able to be switched because they share edges with all other teams
+    # if this happens, we will just assign its team to a team that has the least number of nodes
     for node in best_group[max_team]:
-        no_connection = False
+        connection = False
 
-        print(node)
-
-        while True: 
+        while G.nodes[node]["team"] == max_team and counter < 100: 
             random_team = random.randint(1, best_k)
             while random_team == max_team:
                 random_team = random.randint(1, best_k)
             
-            print(max_team, random_team, best_k, node)
-            
-            
             for next in best_group[random_team]:
                 if G.has_edge(node, next):
-                    no_connection = True
-                    next_group = random_team
+                    connection = True
                     break
-            if no_connection:
-                break
+
+            if not connection:
+                G.nodes[node]["team"] = random_team
+                best_group[max_team].remove(node)
+                best_group[random_team].append(node)
+            
+            counter += 1
+
+            print(counter)
         
-        if no_connection:
-            G.nodes[node]["team"] = next_group
-            temp_group[max_team].remove(node)
-            temp_group[next_group].append(node)
+        if counter == 100:
+            temp_group = best_group.copy()
+            temp_group.pop(max_team, None)
 
-    best_group = temp_group
+            min_team = min(temp_group, key=lambda x: len(temp_group[x]))
+            G.nodes[node]["team"] = min_team
+            temp_group[min_team].append(node)
+            counter = 0
+            
+    temp = []
 
-
-    for node in G.nodes:
-        if G.nodes[node]["team"] == max_team:
-            print(node)
+    for team in best_group:
+        temp.append(len(best_group.get(team)))
         
 # In[85]:
 
-G = read_input('medium.in')
-solve(G)
-validate_output(G)
-visualize(G)
-score(G)
+# G = read_input('medium.in')
+# solve(G)
+# validate_output(G)
+# visualize(G)
+# score(G)
 
+path = 'inputs/small' + str(4) + '.in'
+G = read_input(path)
+solve(G)
+visualize(G)
+print("score for input " + str(4) + " is " + str(score(G)))
 
 
 # %%
